@@ -60,7 +60,7 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ตั้งค่าร้าน'),
+        title: Text('ร้านของฉํน'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(top: 20.0),

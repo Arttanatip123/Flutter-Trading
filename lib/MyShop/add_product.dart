@@ -63,26 +63,18 @@ class _AddProductState extends State<AddProduct> {
     String userId = instance.userId;
 
     Future getImage() async{
-
-        pickedFile = await picker.getImage(source: ImageSource.gallery,maxHeight: 300.0,maxWidth: 300.0);
-
+        pickedFile = await picker.getImage(source: ImageSource.gallery,maxHeight: 200.0,maxWidth: 200.0,imageQuality: 50);
       setState(() {
         if (pickedFile != null) {
           _image = File(pickedFile.path);
-        }else{
-          _image = _f;
         }
       });
     }
     Future getCamera() async{
-      File f = await getImageFileFromAssets('images/NoImage.png');
-      pickedFile = await picker.getImage(source: ImageSource.camera, maxHeight: 300.0, maxWidth: 300.0);
-
+      pickedFile = await picker.getImage(source: ImageSource.camera, maxHeight: 300.0, maxWidth: 300.0, imageQuality: 75);
       setState(() {
         if (pickedFile != null) {
           _image = File(pickedFile.path);
-        }else{
-          _image = _f;
         }
       });
     }
