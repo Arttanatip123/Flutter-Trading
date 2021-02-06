@@ -1,17 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:myapp/BuyEvent/product_model.dart';
 import 'package:myapp/BuyEvent/shop_product_list.dart';
 import 'package:myapp/Dashboard/search_screen.dart';
 import 'package:myapp/MyShop/home_shop_screen.dart';
+import 'package:myapp/Test/Cart.dart';
 import 'package:myapp/config.dart';
 import 'package:myapp/system/MyStorage.dart';
 import 'package:myapp/system/SystemInstance.dart';
 import 'package:myapp/user/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 class ShopListScreen extends StatefulWidget {
   @override
   _ShopListScreenState createState() => _ShopListScreenState();
@@ -22,6 +26,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
   SearchBar searchBar;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   List<Shops> shopList = List<Shops>();
+  List<AllProducts> allProducts = List<AllProducts>();
   Position position;
   double latMe = 16.4396085;
   double lngMe = 102.8285524;
@@ -29,6 +34,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
   var userId;
   String userName = "",passWord="", firsName = "", lastName = "",phoneNumber="";
   SharedPreferences sharedPreferences;
+  Future<void> _launched;
 
   @override
   void initState() {
@@ -43,6 +49,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
       });
 
     getShop();
+    getProducts();
     super.initState();
   });
   }
@@ -95,6 +102,18 @@ class _ShopListScreenState extends State<ShopListScreen> {
     });
     return shopList;
   }
+
+  Future getProducts() async{
+    var data = await http.get('${Config.API_URL}/product/list');
+    var da = utf8.decode(data.bodyBytes);
+    var jsonData = jsonDecode(da);
+    for(var i in jsonData){
+      AllProducts _allProducts = AllProducts(i['idProduct'], i['idUserShop'], i['productName'], i['productPrice'], i['productAmount'], i['productType'], i['productSubType'], i['productImg']);
+      allProducts.add(_allProducts);
+    }
+    return allProducts;
+  }
+
   double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
     double distance = 0;
     var p = 0.017453292519943295;
@@ -108,16 +127,25 @@ class _ShopListScreenState extends State<ShopListScreen> {
   
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      title: Text('ร้านค้า'),
+      title: Text('ซื้อสินค้า'),
       actions: [searchBar.getSearchAction(context)],
+      bottom: TabBar(
+        tabs: [
+          Tab(
+            child: Text('ร้านค้าใกล้เคียง'),
+          ),
+          Tab(
+            child: Text('สินค้าทั้งหมด'),
+          ),
+        ],
+        indicatorColor: Colors.white,
+      ),
+      backgroundColor: Colors.teal,
     );
   }
 
   void onSubmitted(String value) {
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => SearchScreen(value)));
-    // setState(() {
-    //   _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text('You wrote $value!')));
-    // });
   }
 
   _ShopListScreenState() {
@@ -134,245 +162,369 @@ class _ShopListScreenState extends State<ShopListScreen> {
         });
   }
 
+  Future<void> _makePhoneCall(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Future getShopDetail(int idUserShop) async{
+    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${idUserShop}');
+    var da = utf8.decode(data.bodyBytes);
+    var jsonData = jsonDecode(da);
+    return jsonData;
+  }
+
+  Future getUserDetail(int idUserProfile) async{
+    var data = await http.post('${Config.API_URL}/user/user_detail?idUserProfile=${idUserProfile}');
+    var da = utf8.decode(data.bodyBytes);
+    var jsonData = jsonDecode(da);
+    return jsonData;
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: searchBar.build(context),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: searchBar.build(context),
+        drawer: _drawerTab(),
+        key: _scaffoldKey,
+        body: TabBarView(
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.teal,
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 70.0,
-                    width: 70.0,
-                    child: CircleAvatar(
-                      child: Icon(Icons.account_circle, color: Colors.white, size: 60.0,),
-                      backgroundColor: Colors.teal[200],
+            Container(
+              child: shopList.isEmpty ? Container(child: Center(child: Text('กำลังค้นหาร้านค้า...'),),) : ListView.builder(
+                itemCount: shopList.length,
+                itemBuilder: (context, index){
+                  var item = shopList[index];
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0),
                     ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'สวัสดี ,',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      SizedBox(width: 10.0,),
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('('+
-                          firsName,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                      SizedBox(width: 10.0,),
-                      Text(
-                        lastName + ')',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.shopping_cart),
-              title: Text('ซื้อสินค้า'),
-              onTap: (){
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.monetization_on),
-              title: Text('ขายสินค้า'),
-              onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => HomeShopScreen()));
-                // Navigator.of(context).pushAndRemoveUntil(
-                //     MaterialPageRoute(
-                //         builder: (BuildContext context) => HomeShopScreen()),
-                //         (Route<dynamic> route) => false);
-              },
-            ),
-            SizedBox(height: 290.0,),
-            ListTile(
-              leading: Icon(Icons.logout,),
-              title: Text('ออกจากระบบ'),
-              onTap: (){
-                sharedPreferences.clear();
-                sharedPreferences.commit();
-                Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                        builder: (BuildContext context) => LoginScreen()),
-                        (Route<dynamic> route) => false);
-              },
-            ),
-          ],
-        ),
-      ),
-      key: _scaffoldKey,
-      body: shopList.isEmpty ? Container(child: Center(child: Text('กำลังค้นหาร้านค้า...'),),) : ListView.builder(
-          itemCount: shopList.length,
-          itemBuilder: (context, index){
-            var item = shopList[index];
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5.0),
-              ),
-              child: Column(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      int shopId = item.idUserShop;
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  ShopProductList(
-                                      shopId: shopId, shopName: item.shopName, shopLat: double.parse(item.latitude), shopLng: double.parse(item.longtitude)
-                                  )
-                          )
-                      );
-                    },
-                    child: Stack(
+                    child: Column(
                       children: [
-                        Container(
-                          height: MediaQuery.of(context).size.height / 5.5,
-                          width: MediaQuery.of(context).size.width - 15,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10.0),
-                            child: FadeInImage.assetNetwork(
-                              placeholder: 'images/Loading.gif',
-                              image: '${Config.API_URL}/shop/image?imageName=${item.shopImg}',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        // Positioned(
-                        //   top: 6.0,
-                        //   right: 6.0,
-                        //   child: Card(
-                        //     shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(4.0)),
-                        //     child: Padding(
-                        //       padding: EdgeInsets.all(2.0),
-                        //       child: Row(
-                        //         children: <Widget>[
-                        //           Icon(
-                        //             Icons.star,
-                        //             color: Colors.lightBlueAccent,
-                        //             size: 10.0,
-                        //           ),
-                        //           Text(
-                        //             "rating",
-                        //             style: TextStyle(
-                        //               fontSize: 10.0,
-                        //             ),
-                        //           ),
-                        //         ],
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
-                        Positioned(
-                          top: 6.0,
-                          left: 6.0,
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(3.0)),
-                            child: Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: item.shopStatus == '1' ? Text(
-                                " OPEN ",
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ) : Text(
-                                " OFF ",
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
+                        InkWell(
+                          onTap: () {
+                            int shopId = item.idUserShop;
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) =>
+                                        ShopProductList(
+                                            shopId: shopId, shopName: item.shopName, shopLat: double.parse(item.latitude), shopLng: double.parse(item.longtitude)
+                                        )
+                                )
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: MediaQuery.of(context).size.height / 5.5,
+                                width: MediaQuery.of(context).size.width - 15,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: FadeInImage.assetNetwork(
+                                    placeholder: 'images/Loading.gif',
+                                    image: '${Config.API_URL}/shop/image?imageName=${item.shopImg}',
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
+                              // Positioned(
+                              //   top: 6.0,
+                              //   right: 6.0,
+                              //   child: Card(
+                              //     shape: RoundedRectangleBorder(
+                              //         borderRadius: BorderRadius.circular(4.0)),
+                              //     child: Padding(
+                              //       padding: EdgeInsets.all(2.0),
+                              //       child: Row(
+                              //         children: <Widget>[
+                              //           Icon(
+                              //             Icons.star,
+                              //             color: Colors.lightBlueAccent,
+                              //             size: 10.0,
+                              //           ),
+                              //           Text(
+                              //             "rating",
+                              //             style: TextStyle(
+                              //               fontSize: 10.0,
+                              //             ),
+                              //           ),
+                              //         ],
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ),
+                              Positioned(
+                                top: 6.0,
+                                left: 6.0,
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(3.0)),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(4.0),
+                                    child: item.shopStatus == '1' ? Text(
+                                      " OPEN ",
+                                      style: TextStyle(
+                                        fontSize: 10.0,
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ) : Text(
+                                      " OFF ",
+                                      style: TextStyle(
+                                        fontSize: 10.0,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 7.0),
+                        Padding(
+                          padding: EdgeInsets.only(left: 15.0),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            child: Text(
+                              item.shopName,
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              textAlign: TextAlign.left,
                             ),
                           ),
                         ),
+                        SizedBox(height: 1.0),
+                        Padding(
+                          padding: EdgeInsets.only(left: 15.0),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            child: Row(
+                              children: [
+                                Text(
+                                  "เวลาทำการ " + item.officeHours,
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                                Spacer(),
+                                Text(item.shopDistance.toString().substring(0,4) + '  Km '),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 5.0),
                       ],
                     ),
-                  ),
-                  SizedBox(height: 7.0),
-                  Padding(
-                    padding: EdgeInsets.only(left: 15.0),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width,
-                      child: Text(
-                        item.shopName,
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 1.0),
-                  Padding(
-                    padding: EdgeInsets.only(left: 15.0),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width,
-                      child: Row(
-                        children: [
-                          Text(
-                            "เวลาทำการ " + item.officeHours,
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          Spacer(),
-                          Text(item.shopDistance.toString().substring(0,4) + '  Km '),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 5.0),
-                ],
+                  );
+                },
               ),
-            );
-          },
+            ),
+            Container(
+              child: ListView.builder(
+                  itemCount: allProducts.length,
+                  itemBuilder: (context, index){
+                    var item = allProducts[index];
+                    return Card(
+                      elevation: 1.0,
+                      child: ListTile(
+                        leading: Container(
+                          height: 50.0,
+                          width: 50.0,
+                          //TODO เช็คสินค้าหมดหรือไม่
+                          child: item.productAmount != 0 ? FadeInImage.assetNetwork(
+                            placeholder: 'images/Loading.gif',
+                            image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
+                            fit: BoxFit.cover,
+                          ) : Stack(
+                            children: [
+                              Container(
+                                child: FadeInImage.assetNetwork(
+                                  placeholder: 'images/Loading.gif',
+                                  image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
+                                  fit: BoxFit.cover,
+                                ),
+                                height: 50.0,
+                                width: 50.0,
+                              ),
+                              Container(color: Colors.grey.withOpacity(0.75),),
+                              Center(
+                                child: Text('หมด', style: TextStyle(color: Colors.white),),
+                              )
+                            ],
+                          ),
+                        ),
+                        title: Text(item.productName,style: TextStyle(fontSize: 20.0),),
+                        subtitle: Text(item.productPrice.toString()+" THB"),
+                        trailing: Icon(Icons.arrow_right_outlined, color: Colors.teal, size: 30.0,),
+                        onTap: (){
+                          var data = getShopDetail(item.idUserShop);
+                          data.then((value){
+                            //TODO เช็คว่าสินค้ามีร้านค้าหรือไม่
+                            if(value['shopName'] != null){
+                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> ShopProductList(shopId: item.idUserShop, shopName: value['shopName'], shopLat: double.parse(value['latitude']), shopLng: double.parse(value['longtitude'])) ));
+                            }else{
+                              var data = getUserDetail(item.idUserShop);
+                              data.then((value){
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context){
+                                      return AlertDialog(
+                                        content: Container(
+                                          height: 130.0,
+                                          width: 200.0,
+                                          child: Column(
+                                            children: [
+                                              Text('*สินค้าไม่จัดอยู่ในร้านค้า กรุณาติดต่อผู้ขายผ่านช่องทางโทรศัพท์โดยตรง'),
+                                              SizedBox(height: 15.0,),
+                                              Container(
+                                                child: RaisedButton(
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.phone, color: Colors.white,),
+                                                      SizedBox(width: 40.0,),
+                                                      Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
+                                                    ],
+                                                  ),
+                                                  onPressed: (){
+                                                    setState(() {
+                                                      _launched = _makePhoneCall('tel:${value['phoneNumber']}');
+                                                    });
+                                                  },
+                                                  color: Colors.teal,
+                                                ),
+                                                width: 200.0,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                );
+                              });
+                            }
+                          });
+
+                        },
+                      ),
+                    );
+                  },
+              ),
+            )
+          ],
+        )
+      ),
+    );
+  }
+
+  _drawerTab(){
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.teal,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 70.0,
+                  width: 70.0,
+                  child: CircleAvatar(
+                    child: Icon(Icons.account_circle, color: Colors.white, size: 60.0,),
+                    backgroundColor: Colors.teal[200],
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'สวัสดี ,',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                    SizedBox(width: 10.0,),
+                    Text(
+                      userName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('('+
+                        firsName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                    SizedBox(width: 10.0,),
+                    Text(
+                      lastName + ')',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.shopping_cart),
+            title: Text('ซื้อสินค้า'),
+            onTap: (){
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.monetization_on),
+            title: Text('ขายสินค้า'),
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => HomeShopScreen()));
+              // Navigator.of(context).pushAndRemoveUntil(
+              //     MaterialPageRoute(
+              //         builder: (BuildContext context) => HomeShopScreen()),
+              //         (Route<dynamic> route) => false);
+            },
+          ),
+          SizedBox(height: 290.0,),
+          ListTile(
+            leading: Icon(Icons.logout,),
+            title: Text('ออกจากระบบ'),
+            onTap: (){
+              sharedPreferences.clear();
+              sharedPreferences.commit();
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => LoginScreen()),
+                      (Route<dynamic> route) => false);
+            },
+          ),
+        ],
       ),
     );
   }
 }
-
-
 
 
 class Shops {
@@ -388,4 +540,17 @@ class Shops {
   final String shopDistance;
 
   Shops(this.idUserShop, this.shopName, this.shopPhone, this.latitude, this.longtitude, this.officeHours, this.shopComment, this.shopImg, this.shopStatus, this.shopDistance);
+}
+
+class AllProducts{
+  final int idProduct;
+  final int idUserShop;
+  final String productName;
+  final int productPrice;
+  final int productAmount;
+  final String productType;
+  final String productSubType;
+  final String productImg;
+
+  AllProducts(this.idProduct, this.idUserShop, this.productName, this.productPrice, this.productAmount, this.productType, this.productSubType, this.productImg);
 }

@@ -217,10 +217,26 @@ class _ShopProductListState extends State<ShopProductList> {
               leading: Container(
                 height: 50.0,
                 width: 50.0,
-                child: FadeInImage.assetNetwork(
+                child: item.productAmount != 0 ? FadeInImage.assetNetwork(
                   placeholder: 'images/Loading.gif',
                   image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
                   fit: BoxFit.cover,
+                ) : Stack(
+                  children: [
+                    Container(
+                      child: FadeInImage.assetNetwork(
+                        placeholder: 'images/Loading.gif',
+                        image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
+                        fit: BoxFit.cover,
+                      ),
+                      height: 50.0,
+                      width: 50.0,
+                    ),
+                    Container(color: Colors.grey.withOpacity(0.75),),
+                    Center(
+                      child: Text('หมด', style: TextStyle(color: Colors.white),),
+                    )
+                  ],
                 ),
               ),
               title: Text(item.productName,style: TextStyle(fontSize: 20.0),),
