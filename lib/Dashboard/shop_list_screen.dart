@@ -132,10 +132,10 @@ class _ShopListScreenState extends State<ShopListScreen> {
       bottom: TabBar(
         tabs: [
           Tab(
-            child: Text('ร้านค้าใกล้เคียง'),
+            child: Text('สินค้าทั้งหมด'),
           ),
           Tab(
-            child: Text('สินค้าทั้งหมด'),
+            child: Text('ร้านค้าใกล้เคียง'),
           ),
         ],
         indicatorColor: Colors.white,
@@ -195,6 +195,101 @@ class _ShopListScreenState extends State<ShopListScreen> {
         key: _scaffoldKey,
         body: TabBarView(
           children: [
+            //TODO Listview สินค้าทั้งหมด
+            Container(
+              child: allProducts.isEmpty ? Container(child: Center(child: Text('กำลังค้นหาสินค้า...'),),)  : ListView.builder(
+                itemCount: allProducts.length,
+                itemBuilder: (context, index){
+                  var item = allProducts[index];
+                  return Card(
+                    elevation: 1.0,
+                    child: ListTile(
+                      leading: Container(
+                        height: 50.0,
+                        width: 50.0,
+                        //TODO เช็คสินค้าหมดหรือไม่
+                        child: item.productAmount != 0 ? FadeInImage.assetNetwork(
+                          placeholder: 'images/Loading.gif',
+                          image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
+                          fit: BoxFit.cover,
+                        ) : Stack(
+                          children: [
+                            Container(
+                              child: FadeInImage.assetNetwork(
+                                placeholder: 'images/Loading.gif',
+                                image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
+                                fit: BoxFit.cover,
+                              ),
+                              height: 50.0,
+                              width: 50.0,
+                            ),
+                            Container(color: Colors.grey.withOpacity(0.75),),
+                            Center(
+                              child: Text('หมด', style: TextStyle(color: Colors.white),),
+                            )
+                          ],
+                        ),
+                      ),
+                      title: Text(item.productName,style: TextStyle(fontSize: 20.0),),
+                      subtitle: Text(item.productPrice.toString()+" THB"),
+                      trailing: Icon(Icons.arrow_right_outlined, color: Colors.teal, size: 30.0,),
+                      onTap: (){
+                        var data = getShopDetail(item.idUserShop);
+                        data.then((value){
+                          //TODO เช็คว่าสินค้ามีร้านค้าหรือไม่
+                          if(value['shopName'] != null){
+                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> ShopProductList(shopId: item.idUserShop, shopName: value['shopName'], shopLat: double.parse(value['latitude']), shopLng: double.parse(value['longtitude'])) ));
+                          }else{
+                            var data = getUserDetail(item.idUserShop);
+                            data.then((value){
+                              //TODO ไม่มีร้านส่ง id shopName = userName lat = 0 lng = 0
+                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> ShopProductList(shopId: item.idUserShop, shopName: value['userName'], shopLat: 0.0000000, shopLng: 0.0000000)));
+
+                              // showDialog(
+                              //     context: context,
+                              //     builder: (BuildContext context){
+                              //       return AlertDialog(
+                              //         content: Container(
+                              //           height: 130.0,
+                              //           width: 200.0,
+                              //           child: Column(
+                              //             children: [
+                              //               Text('*สินค้าไม่จัดอยู่ในร้านค้า กรุณาติดต่อผู้ขายผ่านช่องทางโทรศัพท์โดยตรง'),
+                              //               SizedBox(height: 15.0,),
+                              //               Container(
+                              //                 child: RaisedButton(
+                              //                   child: Row(
+                              //                     children: [
+                              //                       Icon(Icons.phone, color: Colors.white,),
+                              //                       SizedBox(width: 40.0,),
+                              //                       Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
+                              //                     ],
+                              //                   ),
+                              //                   onPressed: (){
+                              //                     setState(() {
+                              //                       _launched = _makePhoneCall('tel:${value['phoneNumber']}');
+                              //                     });
+                              //                   },
+                              //                   color: Colors.teal,
+                              //                 ),
+                              //                 width: 200.0,
+                              //               ),
+                              //             ],
+                              //           ),
+                              //         ),
+                              //       );
+                              //     }
+                              // );
+                            });
+                          }
+                        });
+
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
             Container(
               child: shopList.isEmpty ? Container(child: Center(child: Text('กำลังค้นหาร้านค้า...'),),) : ListView.builder(
                 itemCount: shopList.length,
@@ -330,97 +425,6 @@ class _ShopListScreenState extends State<ShopListScreen> {
                 },
               ),
             ),
-            Container(
-              child: ListView.builder(
-                  itemCount: allProducts.length,
-                  itemBuilder: (context, index){
-                    var item = allProducts[index];
-                    return Card(
-                      elevation: 1.0,
-                      child: ListTile(
-                        leading: Container(
-                          height: 50.0,
-                          width: 50.0,
-                          //TODO เช็คสินค้าหมดหรือไม่
-                          child: item.productAmount != 0 ? FadeInImage.assetNetwork(
-                            placeholder: 'images/Loading.gif',
-                            image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
-                            fit: BoxFit.cover,
-                          ) : Stack(
-                            children: [
-                              Container(
-                                child: FadeInImage.assetNetwork(
-                                  placeholder: 'images/Loading.gif',
-                                  image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
-                                  fit: BoxFit.cover,
-                                ),
-                                height: 50.0,
-                                width: 50.0,
-                              ),
-                              Container(color: Colors.grey.withOpacity(0.75),),
-                              Center(
-                                child: Text('หมด', style: TextStyle(color: Colors.white),),
-                              )
-                            ],
-                          ),
-                        ),
-                        title: Text(item.productName,style: TextStyle(fontSize: 20.0),),
-                        subtitle: Text(item.productPrice.toString()+" THB"),
-                        trailing: Icon(Icons.arrow_right_outlined, color: Colors.teal, size: 30.0,),
-                        onTap: (){
-                          var data = getShopDetail(item.idUserShop);
-                          data.then((value){
-                            //TODO เช็คว่าสินค้ามีร้านค้าหรือไม่
-                            if(value['shopName'] != null){
-                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> ShopProductList(shopId: item.idUserShop, shopName: value['shopName'], shopLat: double.parse(value['latitude']), shopLng: double.parse(value['longtitude'])) ));
-                            }else{
-                              var data = getUserDetail(item.idUserShop);
-                              data.then((value){
-                                showDialog(
-                                    context: context,
-                                    builder: (BuildContext context){
-                                      return AlertDialog(
-                                        content: Container(
-                                          height: 130.0,
-                                          width: 200.0,
-                                          child: Column(
-                                            children: [
-                                              Text('*สินค้าไม่จัดอยู่ในร้านค้า กรุณาติดต่อผู้ขายผ่านช่องทางโทรศัพท์โดยตรง'),
-                                              SizedBox(height: 15.0,),
-                                              Container(
-                                                child: RaisedButton(
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(Icons.phone, color: Colors.white,),
-                                                      SizedBox(width: 40.0,),
-                                                      Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
-                                                    ],
-                                                  ),
-                                                  onPressed: (){
-                                                    setState(() {
-                                                      _launched = _makePhoneCall('tel:${value['phoneNumber']}');
-                                                    });
-                                                  },
-                                                  color: Colors.teal,
-                                                ),
-                                                width: 200.0,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                );
-                              });
-                            }
-                          });
-
-                        },
-                      ),
-                    );
-                  },
-              ),
-            )
           ],
         )
       ),

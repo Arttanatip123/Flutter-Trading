@@ -33,6 +33,7 @@ class _ShopOrderState extends State<ShopOrder> {
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     for (var i in jsonData){
+      //TODO ถ้า orderStatus =1 (กำลังดำเนินการ)
       if(i['orderStatus'] == 1){
         Order orders = Order(
           i['idOrderList'],

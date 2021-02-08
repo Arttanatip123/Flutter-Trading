@@ -28,6 +28,26 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
   String dateTime;
   int shopId;
 
+  postOrder(){
+    Map<String, String> params = Map();
+    params['userId'] = systemInstance.userId;
+    params['shopId'] = widget.shopId.toString();
+    params['timeReceive'] = dateTime.toString();
+    params['totalPrice']  = totalPrice.toString();
+    params['product'] = orders.toString();
+    http.post('${Config.API_URL}/order/makeorder', body: params).then((response){
+      Map retMap = jsonDecode(response.body);
+      int status = retMap['status'];
+      if(status == 0){
+        Navigator.pop(context);
+        Navigator.pop(context);
+        CoolAlert.show(context: context, type: CoolAlertType.success,text: "ทำรายการสำเร็จ");
+      }else{
+        CoolAlert.show(context: context, type: CoolAlertType.error);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     for (Product p in cart){
@@ -133,23 +153,8 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
                         borderRadius: BorderRadius.circular(18.0),
                       ),
                       onPressed: (){
-                        Map<String, String> params = Map();
-                        params['userId'] = systemInstance.userId;
-                        params['shopId'] = widget.shopId.toString();
-                        params['timeReceive'] = dateTime.toString();
-                        params['totalPrice']  = totalPrice.toString();
-                        params['product'] = orders.toString();
-                        http.post('${Config.API_URL}/order/makeorder', body: params).then((response){
-                          Map retMap = jsonDecode(response.body);
-                          int status = retMap['status'];
-                          if(status == 0){
-                            Navigator.pop(context);
-                            Navigator.pop(context);
-                            CoolAlert.show(context: context, type: CoolAlertType.success,text: "ทำรายการสำเร็จ");
-                          }else{
-                            CoolAlert.show(context: context, type: CoolAlertType.error);
-                          }
-                        });
+                        postOrder();
+
                       },
                     ),
                   ),

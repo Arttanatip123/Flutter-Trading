@@ -23,7 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     getData();
     super.initState();
   }
-  getData() async {
+  Future getData() async {
     Map params = Map();
     params['idUserProfile'] = systemInstance.userId;
     http.post('${Config.API_URL}/user/user_detail', body: params).then((response){

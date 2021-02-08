@@ -53,11 +53,17 @@ class _ShopProductListState extends State<ShopProductList> {
     return products;
   }
 
-  getData() async {
+  getShopPhone() async {
     var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${shopId}');
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     shopPhone = jsonData['shopPhone'];
+  }
+  getUserPhone() async {
+    var data = await http.post('${Config.API_URL}/user/user_detail?idUserProfile=${shopId}');
+    var da = utf8.decode(data.bodyBytes);
+    var jsonData = jsonDecode(da);
+    shopPhone = jsonData['phoneNumber'];
   }
 
   Future<void> _makePhoneCall(String url) async {
@@ -81,7 +87,15 @@ class _ShopProductListState extends State<ShopProductList> {
   @override
   void initState() {
     this.shopId = widget.shopId;
-    getData();
+    //TODO เช็ค parameter ส่งมาเป็นร้าน หรือว่า user
+    if(shopLng == 0.0000000){
+      //TODO ถ้าเป็น user ไปดึงเบอร์ user มา
+      getUserPhone();
+    }else{
+      //TODO ถ้าเป็นร้านไปดึงเบอร์โทรร้านมา
+      getShopPhone();
+    }
+
     _getProduct().then((res){
       setState(() {});
     });
@@ -197,7 +211,7 @@ class _ShopProductListState extends State<ShopProductList> {
           )
         ],
       ),
-      body: buildListView(),
+      body: products.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : buildListView(),
     );
   }
 
