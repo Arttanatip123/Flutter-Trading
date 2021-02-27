@@ -64,13 +64,15 @@ class _CartState extends State<Cart> {
                 elevation: 1.0,
                 child: ListTile(
                   leading: Container(
-                    height: 100.0,
-                    width: 100.0,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: NetworkImage(
-                              "${Config.API_URL}/product/image?imageName=${item.productImg}")),
-                      borderRadius: BorderRadius.circular(20.0),
+                    height: 50.0,
+                    width: 50.0,
+                    child:FadeInImage(
+                      placeholder: AssetImage("images/Loading.gif"),
+                      image: NetworkImage(
+                        "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                        headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                      ),
+                      fit: BoxFit.cover,
                     ),
                   ),
                   title: Text(item.productName,style: TextStyle(fontSize: 20.0),),

@@ -43,15 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   signIn(String userName, passWord) async {
     Map params = {
-      'userName': userName,
-      'passWord': passWord,
+      'username': userName,
+      'password': passWord,
     };
     var jsonData = null;
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    var response = await http.post('${Config.API_URL}/user/login1', body: params);
+    var response = await http.post('${Config.API_URL}/authorize', body: params);
     if (response.statusCode == 200) {
       _isLoading = false;
       jsonData = jsonDecode(response.body);
+      print(jsonData);
+      systemInstance.token = jsonData['token'];
       sharedPreferences.setString('token', jsonData['token']);
 
       if(jsonData['status'] == 0){
@@ -61,17 +63,25 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => MainScreen()), (
             Route<dynamic> route) => false);
+      }else{
+        print('Login Faild');
+        _isLoading = false;
+        setState(() {
+
+        });
+        CoolAlert.show(context: context, type: CoolAlertType.warning,text: 'ชื่อหรือรหัสผ่านไม่ถูกต้อง');
       }
     } else {
       _isLoading = false;
+      setState(() {
+      });
+      CoolAlert.show(context: context, type: CoolAlertType.warning,text: 'ไม่สามารถเชื่อมต่อกับระบบได้');
       print(response.body);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(

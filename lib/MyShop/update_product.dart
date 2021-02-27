@@ -24,6 +24,7 @@ class UpdateProduct extends StatefulWidget {
 }
 
 class _UpdateProductState extends State<UpdateProduct> {
+  SystemInstance systemInstance = SystemInstance();
   TextEditingController _productName = TextEditingController();
   TextEditingController _productPrice = TextEditingController();
   TextEditingController _productAmount = TextEditingController();
@@ -41,8 +42,9 @@ class _UpdateProductState extends State<UpdateProduct> {
   var pickedFile;
 
   _getProduct() async {
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
     var data =
-        await http.get('${Config.API_URL}/product/detail/${widget.idProduct}');
+        await http.get('${Config.API_URL}/product/detail/${widget.idProduct}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     _productName.text = jsonData['productName'];
@@ -101,6 +103,7 @@ class _UpdateProductState extends State<UpdateProduct> {
             filename: "filename.png");
       }
       FormData formData = FormData.fromMap(params);
+      dio.options.headers["Authorization"] = "Bearer ${systemInstance.token}";
       dio
           .post('${Config.API_URL}/product/update', data: formData)
           .then((response) {
@@ -120,7 +123,8 @@ class _UpdateProductState extends State<UpdateProduct> {
     }
 
     removeProduct() async{
-      var data = await http.post('${Config.API_URL}/product/remove/?productId=${widget.idProduct}');
+      Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+      var data = await http.post('${Config.API_URL}/product/remove/?productId=${widget.idProduct}', headers: header);
       var jsonData = json.decode(data.body);
       if(jsonData['status'] == 0){
         Navigator.pop(context);
@@ -145,7 +149,7 @@ class _UpdateProductState extends State<UpdateProduct> {
           )
         ],
       ),
-      body: SingleChildScrollView(
+      body:_productName.text.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             ListTile(
@@ -240,11 +244,14 @@ class _UpdateProductState extends State<UpdateProduct> {
                 child: _image == null
                     ? Container(
                         child: Container(
-                          decoration: BoxDecoration(
-                              image: DecorationImage(
+                          child: FadeInImage(
+                            placeholder: AssetImage("images/Loading.gif"),
                             image: NetworkImage(
-                                "${Config.API_URL}/product/image?imageName=${widget.productImg}"),
-                          )),
+                              "${Config.API_URL}/product/image?imageName=${widget.productImg}",
+                              headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                            ),
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         color: Colors.grey[200],
                         width: 250.0,

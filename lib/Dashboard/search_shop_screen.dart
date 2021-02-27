@@ -7,16 +7,18 @@ import 'package:http/http.dart' as http;
 import 'package:myapp/BuyEvent/shop_product_list.dart';
 import 'package:myapp/Dashboard/shop_list_screen.dart';
 import 'package:myapp/config.dart';
+import 'package:myapp/system/SystemInstance.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchShopScreen extends StatefulWidget {
   final String value;
-  SearchScreen(this.value);
+  SearchShopScreen(this.value);
   @override
-  _SearchScreenState createState() => _SearchScreenState(this.value);
+  _SearchShopScreenState createState() => _SearchShopScreenState(this.value);
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  _SearchScreenState(this.value);
+class _SearchShopScreenState extends State<SearchShopScreen> {
+  _SearchShopScreenState(this.value);
+  SystemInstance systemInstance = SystemInstance();
   List<Shops> shopList = List<Shops>();
   String value;
   Position position;
@@ -35,7 +37,8 @@ class _SearchScreenState extends State<SearchScreen> {
     latMe = position.latitude.toDouble();
     lngMe = position.longitude.toDouble();
 
-    var data = await http.post('${Config.API_URL}/product/search?value=${value}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/product/search?value=${value}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     for(var i in jsonData){

@@ -5,6 +5,7 @@ import 'package:myapp/BuyEvent/cart_screen.dart';
 import 'package:myapp/BuyEvent/map_navigator_creen.dart';
 import 'package:myapp/BuyEvent/product_model.dart';
 import 'package:myapp/config.dart';
+import 'package:myapp/system/SystemInstance.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ShopProductList extends StatefulWidget {
@@ -21,6 +22,7 @@ class ShopProductList extends StatefulWidget {
 
 class _ShopProductListState extends State<ShopProductList> {
   _ShopProductListState(this.shopId,this.shopName,this.shopLat,this.shopLng);
+  SystemInstance systemInstance = SystemInstance();
   Future<void> _launched;
   List<Product> products = List<Product>();
   List<Product> productList = List<Product>();
@@ -33,7 +35,8 @@ class _ShopProductListState extends State<ShopProductList> {
 
 
   Future<List<Product>> _getProduct() async {
-    var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${shopId}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${shopId}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var js = jsonDecode(da);
     for (var u in js) {
@@ -54,13 +57,15 @@ class _ShopProductListState extends State<ShopProductList> {
   }
 
   getShopPhone() async {
-    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${shopId}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${shopId}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     shopPhone = jsonData['shopPhone'];
   }
   getUserPhone() async {
-    var data = await http.post('${Config.API_URL}/user/user_detail?idUserProfile=${shopId}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/user/user_detail?idUserProfile=${shopId}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     shopPhone = jsonData['phoneNumber'];
@@ -113,7 +118,7 @@ class _ShopProductListState extends State<ShopProductList> {
               InkWell(
                 child: Text('ติดต่อ', style: TextStyle(fontSize: 18.0),),
                 onTap: (){
-                  showDialog(
+                  shopLat != null ? showDialog(
                       context: context,
                       builder: (BuildContext context){
                         return AlertDialog(
@@ -154,6 +159,42 @@ class _ShopProductListState extends State<ShopProductList> {
                                     ),
                                     onPressed: (){
                                       _openOnGoogleMapApp(shopLat, shopLng);
+                                    },
+                                    color: Colors.teal,
+                                  ),
+                                  width: 200.0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                  ) : showDialog(
+                      context: context,
+                      builder: (BuildContext context){
+                        return AlertDialog(
+                          content: Container(
+                            height: 130.0,
+                            width: 200.0,
+                            child: Column(
+                              children: [
+                                Text('เลือกช่องทาง'),
+                                Text('*สินค้าไม่ระบุตำแหน่ง กรุณาติดต่อผู้ขายโดยตรง',style: TextStyle(fontSize: 14.0),),
+                                SizedBox(height: 15.0,),
+                                Container(
+                                  child: RaisedButton(
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.phone, color: Colors.white,),
+                                        SizedBox(width: 40.0,),
+                                        Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
+                                      ],
+                                    ),
+                                    onPressed: (){
+                                      setState(() {
+                                        print(shopPhone);
+                                        _launched = _makePhoneCall('tel:$shopPhone');
+                                      });
                                     },
                                     color: Colors.teal,
                                   ),
@@ -228,29 +269,59 @@ class _ShopProductListState extends State<ShopProductList> {
           child: Card(
             elevation: 1.0,
             child: ListTile(
-              leading: Container(
-                height: 50.0,
-                width: 50.0,
-                child: item.productAmount != 0 ? FadeInImage.assetNetwork(
-                  placeholder: 'images/Loading.gif',
-                  image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
-                  fit: BoxFit.cover,
-                ) : Stack(
-                  children: [
-                    Container(
-                      child: FadeInImage.assetNetwork(
-                        placeholder: 'images/Loading.gif',
-                        image: '${Config.API_URL}/product/image?imageName=${item.productImg}',
-                        fit: BoxFit.cover,
-                      ),
-                      height: 50.0,
-                      width: 50.0,
+              leading: InkWell(
+                onTap: (){
+                  //TODO Show dialog รูปภาพ
+                  showDialog(
+                      context: context,
+                    builder: (BuildContext context){
+                        return Dialog(
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 500,
+                            child: FadeInImage(
+                              placeholder: AssetImage("images/Loading.gif"),
+                              image: NetworkImage(
+                                "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                                headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                          ),
+                        );
+                    }
+                  );
+                },
+                child: Container(
+                  height: 50.0,
+                  width: 50.0,
+                  child: item.productAmount != 0 ? FadeInImage(
+                    placeholder: AssetImage("images/Loading.gif"),
+                    image: NetworkImage(
+                      "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                      headers: {"Authorization": "Bearer ${systemInstance.token}"},
                     ),
-                    Container(color: Colors.grey.withOpacity(0.75),),
-                    Center(
-                      child: Text('หมด', style: TextStyle(color: Colors.white),),
-                    )
-                  ],
+                    fit: BoxFit.cover,
+                  ) : Stack(
+                    children: [
+                      Container(
+                        child: FadeInImage(
+                          placeholder: AssetImage("images/Loading.gif"),
+                          image: NetworkImage(
+                            "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                            headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                        height: 50.0,
+                        width: 50.0,
+                      ),
+                      Container(color: Colors.grey.withOpacity(0.75),),
+                      Center(
+                        child: Text('หมด', style: TextStyle(color: Colors.white),),
+                      )
+                    ],
+                  ),
                 ),
               ),
               title: Text(item.productName,style: TextStyle(fontSize: 20.0),),

@@ -26,7 +26,8 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
   }
 
   getData() async {
-    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(userId)}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(userId)}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     print(jsonData);
@@ -42,7 +43,8 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
     Map params = Map();
     params['idUserShop'] = userId;
     params['shopStatus'] = _status;
-    var data = await http.post('${Config.API_URL}/shop/status', body: params);
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/shop/status', body: params, headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     if(jsonData['status'] == 0) {

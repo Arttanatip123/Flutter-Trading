@@ -5,6 +5,7 @@ import 'package:cool_alert/cool_alert.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/system/SystemInstance.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config.dart';
@@ -19,6 +20,7 @@ class ShopActiveOrder extends StatefulWidget {
 
 class _ShopActiveOrderState extends State<ShopActiveOrder> {
   _ShopActiveOrderState(this.idOrderList, this.userName);
+  SystemInstance systemInstance = SystemInstance();
   int idOrderList,totalPrice,idUserProfile;
   String userName,dateTime="..........",shopPhone="";
   List lstProducts = List();
@@ -39,7 +41,8 @@ class _ShopActiveOrderState extends State<ShopActiveOrder> {
   }
 
   Future<Response> getOrder() async{
-    var data = await http.post('${Config.API_URL}/order/productbyid?idOrderList=${idOrderList}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/order/productbyid?idOrderList=${idOrderList}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     var jsonP = jsonData['productList'];
@@ -53,7 +56,8 @@ class _ShopActiveOrderState extends State<ShopActiveOrder> {
   }
   
   getData() async{
-    var data = await  http.post('${Config.API_URL}/user/user_detail?idUserProfile=${idUserProfile}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await  http.post('${Config.API_URL}/user/user_detail?idUserProfile=${idUserProfile}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     setState(() {
@@ -149,7 +153,8 @@ class _ShopActiveOrderState extends State<ShopActiveOrder> {
                         Map params = Map();
                         params['idOrderList'] = idOrderList.toString();
                         params['status'] = 3.toString();
-                        http.post('${Config.API_URL}/order/update_status/',body: params).then((response){
+                        Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+                        http.post('${Config.API_URL}/order/update_status/',body: params, headers: header).then((response){
                           Map retMap = jsonDecode(response.body);
                           int status = retMap['status'];
                           if(status == 0){
@@ -186,7 +191,8 @@ class _ShopActiveOrderState extends State<ShopActiveOrder> {
                         Map params = Map();
                         params['idOrderList'] = idOrderList.toString();
                         params['status'] = 2.toString();
-                        http.post('${Config.API_URL}/order/update_status/',body: params).then((response){
+                        Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+                        http.post('${Config.API_URL}/order/update_status/',body: params, headers: header).then((response){
                           Map retMap = jsonDecode(response.body);
                           int status = retMap['status'];
                           if(status == 0){

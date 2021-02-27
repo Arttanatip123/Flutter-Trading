@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/system/SystemInstance.dart';
 
 import '../../config.dart';
 
@@ -16,6 +17,7 @@ class ShopCompleteOrder extends StatefulWidget {
 
 class _ShopCompleteOrderState extends State<ShopCompleteOrder> {
   _ShopCompleteOrderState(this.idOrderList, this.userName);
+  SystemInstance systemInstance = SystemInstance();
   int idOrderList, totalPrice;
   String userName;
   List lstProducts = List();
@@ -27,7 +29,8 @@ class _ShopCompleteOrderState extends State<ShopCompleteOrder> {
   }
 
   Future<Response> getOrder() async{
-    var data = await http.post('${Config.API_URL}/order/productbyid?idOrderList=${idOrderList}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/order/productbyid?idOrderList=${idOrderList}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     var jsonP = jsonData['productList'];

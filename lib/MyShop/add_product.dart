@@ -21,6 +21,7 @@ class AddProduct extends StatefulWidget {
 }
 
 class _AddProductState extends State<AddProduct> {
+  SystemInstance systemInstance = SystemInstance();
   TextEditingController _productName = TextEditingController();
   TextEditingController _productPrice = TextEditingController();
   TextEditingController _productAmount = TextEditingController();
@@ -63,7 +64,7 @@ class _AddProductState extends State<AddProduct> {
     String userId = instance.userId;
 
     Future getImage() async{
-        pickedFile = await picker.getImage(source: ImageSource.gallery,maxHeight: 200.0,maxWidth: 200.0,imageQuality: 50);
+       pickedFile = await picker.getImage(source: ImageSource.gallery);
       setState(() {
         if (pickedFile != null) {
           _image = File(pickedFile.path);
@@ -71,7 +72,7 @@ class _AddProductState extends State<AddProduct> {
       });
     }
     Future getCamera() async{
-      pickedFile = await picker.getImage(source: ImageSource.camera, maxHeight: 300.0, maxWidth: 300.0, imageQuality: 75);
+      pickedFile = await picker.getImage(source: ImageSource.camera);
       setState(() {
         if (pickedFile != null) {
           _image = File(pickedFile.path);
@@ -94,6 +95,7 @@ class _AddProductState extends State<AddProduct> {
       }
       params['fileImg'] = MultipartFile.fromBytes(_image.readAsBytesSync(), filename: "filename.png");
       FormData formData = FormData.fromMap(params);
+      dio.options.headers["Authorization"] = "Bearer ${systemInstance.token}";
       dio.post('${Config.API_URL}/product/save', data: formData).then((response){
         print(response);
         Map retMap = jsonDecode(response.toString());
@@ -209,7 +211,14 @@ class _AddProductState extends State<AddProduct> {
                     color: Colors.grey[200],
                     width: 250.0,
                     height: 250.0,
-                )  : Image.file(_image),
+                )  : Container(
+                  width: 250.0,
+                  height: 250.0,
+                    child: Image.file(
+                      _image,
+                      fit: BoxFit.cover,
+                    ),
+                ),
               ),
             ),
 

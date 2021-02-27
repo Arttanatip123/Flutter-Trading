@@ -29,7 +29,8 @@ class _ShopOrderState extends State<ShopOrder> {
   }
 
   Future<Response> getOrder() async {
-    var data = await http.post('${Config.API_URL}/order/user?userId=${systemInstance.userId}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/order/user?userId=${systemInstance.userId}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     for (var i in jsonData){
@@ -110,7 +111,7 @@ class _ShopOrderState extends State<ShopOrder> {
           ),
           body: TabBarView(
             children: [
-              Container(
+              order1.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : Container(
                 child: ListView.builder(
                   itemCount: order1.length,
                   itemBuilder: (context, index){
@@ -161,7 +162,11 @@ class _ShopOrderState extends State<ShopOrder> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (BuildContext context) => ActiveOrder(item.idOrderList, item.shopName)));
+                                    builder: (BuildContext context) => ActiveOrder(item.idOrderList, item.shopName))).then((value){
+                                      setState(() {
+
+                                      });
+                            });
                           },
                         ),
                       ),

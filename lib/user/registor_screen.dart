@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/config.dart';
-import 'package:myapp/system/SystemInstance.dart';
 import 'package:myapp/user/login_screen.dart';
 
 
@@ -114,7 +113,7 @@ class _RegistorScreenState extends State<RegistorScreen> {
             leading: Icon(Icons.label, color: Colors.teal),
             title: TextField(
               controller: _firstName,
-              decoration: InputDecoration(labelText: ' ชื่อจริง'),
+              decoration: InputDecoration(labelText: ' Firstname'),
             ),
           ),
 
@@ -122,14 +121,14 @@ class _RegistorScreenState extends State<RegistorScreen> {
             leading: Icon(Icons.label, color: Colors.teal),
             title: TextField(
               controller: _lastName,
-              decoration: InputDecoration(labelText: ' นามสกุล'),
+              decoration: InputDecoration(labelText: ' Lastname'),
             ),
           ),
           ListTile(
             leading: Icon(Icons.phone, color: Colors.teal),
             title: TextField(
               controller: _phoneNumber,
-              decoration: InputDecoration(labelText: ' หมายเลขโทรศัพท์'),
+              decoration: InputDecoration(labelText: ' Phone number'),
               keyboardType: TextInputType.number,
             ),
           ),

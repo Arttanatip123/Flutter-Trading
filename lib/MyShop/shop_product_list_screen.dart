@@ -13,10 +13,12 @@ class ProductList extends StatefulWidget {
 }
 
 class _ProductListState extends State<ProductList> {
+  SystemInstance systemInstance = SystemInstance();
   String userId;
 
   Future<List<Product>> _getProduct() async {
-    var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${userId}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${userId}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var js = jsonDecode(da);
 
@@ -71,9 +73,12 @@ class _ProductListState extends State<ProductList> {
                       leading: Container(
                         height: 50.0,
                         width: 50.0,
-                        child: FadeInImage.assetNetwork(
-                          placeholder: 'images/Loading.gif',
-                          image: '${Config.API_URL}/product/image?imageName=${snapshot.data[index].productImg}',
+                        child: FadeInImage(
+                          placeholder: AssetImage("images/Loading.gif"),
+                          image: NetworkImage(
+                            "${Config.API_URL}/product/image?imageName=${snapshot.data[index].productImg}",
+                            headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -106,7 +111,6 @@ class _ProductListState extends State<ProductList> {
                                 (BuildContext context) => UpdateProduct(idProduct:snapshot.data[index].idProduct, productImg: snapshot.data[index].productImg))).then((value){setState(() {
 
                                 });});
-
                       },
                     ),
                   );

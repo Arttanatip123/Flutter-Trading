@@ -90,7 +90,7 @@ class _CreateShopState extends State<CreateShop> {
   }
 
   Future getImage() async{
-    pickedFile = await picker.getImage(source: ImageSource.gallery, maxHeight: 200.0, maxWidth: 300.0);
+    pickedFile = await picker.getImage(source: ImageSource.gallery);
 
     setState(() {
       if (pickedFile != null) {
@@ -99,7 +99,7 @@ class _CreateShopState extends State<CreateShop> {
     });
   }
   Future getCamera() async{
-    pickedFile = await picker.getImage(source: ImageSource.camera, maxHeight: 200.0, maxWidth: 300.0);
+    pickedFile = await picker.getImage(source: ImageSource.camera);
 
     setState(() {
       if (pickedFile != null) {
@@ -136,6 +136,7 @@ class _CreateShopState extends State<CreateShop> {
 
     params['shopStatus'] = shopStatus;
     FormData formData = FormData.fromMap(params);
+    dio.options.headers["Authorization"] = "Bearer ${systemInstance.token}";
     dio
         .post('${Config.API_URL}/shop/save', data: formData)
         .then((response) {
@@ -151,7 +152,8 @@ class _CreateShopState extends State<CreateShop> {
   }
 
   Future getData() async{
-    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(systemInstance.userId)}');
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(systemInstance.userId)}',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     print(jsonData);
@@ -166,7 +168,9 @@ class _CreateShopState extends State<CreateShop> {
         lat = double.parse(jsonData['latitude']);
         lng = double.parse(jsonData['longtitude']);
         movetoGPS(lat,lng);
-
+        setState(() {
+          
+        });
 
     }
   }
@@ -205,6 +209,7 @@ class _CreateShopState extends State<CreateShop> {
                   child: Center(
                       child: Image.network(
                         "${Config.API_URL}/shop/image?imageName=${shopImg}",
+                        headers: {"Authorization": "Bearer ${systemInstance.token}"},
                         fit: BoxFit.cover,
                       ),
                   ),

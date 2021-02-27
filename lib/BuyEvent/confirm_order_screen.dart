@@ -35,7 +35,8 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
     params['timeReceive'] = dateTime.toString();
     params['totalPrice']  = totalPrice.toString();
     params['product'] = orders.toString();
-    http.post('${Config.API_URL}/order/makeorder', body: params).then((response){
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    http.post('${Config.API_URL}/order/makeorder', body: params, headers: header).then((response){
       Map retMap = jsonDecode(response.body);
       int status = retMap['status'];
       if(status == 0){
