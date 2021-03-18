@@ -48,6 +48,9 @@ dependencies:
   flutter_svg:
   flutter_search_bar: ^2.1.0
   flutter_launcher_icons: ^0.8.1
+  firebase_messaging: ^7.0.3
+  flutter_local_notifications: ^4.0.1+1
+
 
 flutter_icons:
   android: "launcher_icon"

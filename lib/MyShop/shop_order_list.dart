@@ -20,9 +20,11 @@ class _ShopOrderListState extends State<ShopOrderList> {
   List<Order> order1 = List<Order>();
   List<Order> order2 = List<Order>();
   List<Order> order3 = List<Order>();
+  bool _isLoading = false;
 
   @override
   void initState() {
+    _isLoading = true;
     getOrder();
     super.initState();
   }
@@ -76,6 +78,7 @@ class _ShopOrderListState extends State<ShopOrderList> {
         order3.add(orders);
       }
     }
+    _isLoading = false;
     setState(() {
 
     });
@@ -109,7 +112,7 @@ class _ShopOrderListState extends State<ShopOrderList> {
           ),
           body: TabBarView(
             children: [
-              order1.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : Container(
+              _isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),) : Container(
                 child: ListView.builder(
                   itemCount: order1.length,
                   itemBuilder: (context, index){

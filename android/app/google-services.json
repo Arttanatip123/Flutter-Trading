@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "874949172109",
-    "project_id": "fcm-agrocenter",
-    "storage_bucket": "fcm-agrocenter.appspot.com"
+    "project_number": "668624128535",
+    "project_id": "agrocenter-304411",
+    "storage_bucket": "agrocenter-304411.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:874949172109:android:035ff83a71944f38777bc4",
+        "mobilesdk_app_id": "1:668624128535:android:5ed34231e09eabaac8ea52",
         "android_client_info": {
           "package_name": "com.example.myapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "874949172109-t8glvn7uk93co07vlck2h50jd2cu91fl.apps.googleusercontent.com",
+          "client_id": "668624128535-j7qib50fs0cbtidk34rceker56lstb05.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDfy44LdEtyfIgbztugscFmvpve994mc4M"
+          "current_key": "AIzaSyDNVG7G8remxqevBoOg-OA3o46XUWHcQEQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "874949172109-t8glvn7uk93co07vlck2h50jd2cu91fl.apps.googleusercontent.com",
+              "client_id": "668624128535-j7qib50fs0cbtidk34rceker56lstb05.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

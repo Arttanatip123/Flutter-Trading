@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:cool_alert/cool_alert.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,7 +11,6 @@ import 'package:myapp/BuyEvent/product_model.dart';
 import 'package:myapp/BuyEvent/shop_product_list.dart';
 import 'package:myapp/Dashboard/search_shop_screen.dart';
 import 'package:myapp/MyShop/home_shop_screen.dart';
-import 'package:myapp/Test/Cart.dart';
 import 'package:myapp/config.dart';
 import 'package:myapp/system/MyStorage.dart';
 import 'package:myapp/system/SystemInstance.dart';
@@ -40,6 +41,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
       phoneNumber = "";
   SharedPreferences sharedPreferences;
   TabController tabControl;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -53,9 +55,10 @@ class _ShopListScreenState extends State<ShopListScreen> {
         print(userId);
         getData(userId);
       });
-
+      _isLoading = true;
       getShop();
       getProducts();
+      _isLoading = false;
       //super.initState();
     });
   }
@@ -73,6 +76,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
       firsName = jsonData['firstName'];
       lastName = jsonData['lastName'];
       phoneNumber = jsonData['phoneNumber'];
+      systemInstance.fcmToken = jsonData["fcmToken"];
     });
   }
 
@@ -91,7 +95,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
     var data = await http.get('${Config.API_URL}/product/list',headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
-    print(jsonData);
+    //print(jsonData);
       for (var i in jsonData) {
         AllProducts _allProducts = AllProducts(
             i['idProduct'],
@@ -104,7 +108,6 @@ class _ShopListScreenState extends State<ShopListScreen> {
             i['productImg']);
         allProducts.add(_allProducts);
       }
-
     return allProducts;
   }
 
@@ -112,7 +115,6 @@ class _ShopListScreenState extends State<ShopListScreen> {
     position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     latMe = position.latitude.toDouble();
     lngMe = position.longitude.toDouble();
-
     Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
     var data = await http.get('${Config.API_URL}/shop/list',headers: header);
     var da = utf8.decode(data.bodyBytes);
@@ -139,11 +141,18 @@ class _ShopListScreenState extends State<ShopListScreen> {
           }
         }
       }
+    //TODO ส่งตำแหน่งปัจจุบันให้ api
+    Map params = {
+      "idUserProfile" : systemInstance.userId,
+      "userLat" : latMe.toString(),
+      "userLng" : lngMe.toString(),
+    };
+    await http.post('${Config.API_URL}/user/update_location',headers: header, body: params);
+    setState(() {
 
-    setState(() {});
+    });
     return shopList;
   }
-
 
   double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
     double distance = 0;
@@ -230,11 +239,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
             children: [
               //TODO Listview สินค้าทั้งหมด
               Container(
-                child: allProducts.isEmpty ? Container(
-                        child: Center(
-                          child: Text('กำลังค้นหาสินค้า...'),
-                        ),
-                      ) : ListView.builder(
+                child: _isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),) : ListView.builder(
                         itemCount: allProducts.length,
                         itemBuilder: (context, index) {
                           var item = allProducts[index];
@@ -362,12 +367,8 @@ class _ShopListScreenState extends State<ShopListScreen> {
               ),
               //TODO Tab ร้านใกล้เคียง
               Container(
-                child: shopList.isEmpty
-                    ? Container(
-                        child: Center(
-                          child: Text('กำลังค้นหาร้านค้า...'),
-                        ),
-                      )
+                child: _isLoading ?
+                    Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),)
                     : ListView.builder(
                         itemCount: shopList.length,
                         itemBuilder: (context, index) {
@@ -605,13 +606,22 @@ class _ShopListScreenState extends State<ShopListScreen> {
               Icons.logout,
             ),
             title: Text('ออกจากระบบ'),
-            onTap: () {
+            onTap: () async {
               sharedPreferences.clear();
               sharedPreferences.commit();
-              Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => LoginScreen()),
-                  (Route<dynamic> route) => false);
+              Map param = {'idUserProfile': systemInstance.userId};
+              Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+              var data = await http.post('${Config.API_URL}/user/logout',headers: header, body: param);
+              var jsonData = jsonDecode(data.body);
+              if(jsonData['status'] == 0){
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (BuildContext context) => LoginScreen()),
+                        (Route<dynamic> route) => false);
+              }else{
+                CoolAlert.show(context: context, type: CoolAlertType.error,text: 'ไม่สามารถดำเนินการได้โปรลองอีกครั้ง...');
+              }
+
             },
           ),
         ],

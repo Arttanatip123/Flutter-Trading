@@ -1,7 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:cool_alert/cool_alert.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -10,7 +9,6 @@ import 'package:myapp/main_screen.dart';
 import 'package:myapp/system/MyStorage.dart';
 import 'package:myapp/system/SystemInstance.dart';
 import 'package:myapp/user/registor_screen.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -26,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _passWordVisible = false;
   var userId;
   MyStorage myStorage;
+  FirebaseMessaging firebaseMessaging = FirebaseMessaging();
 
 
   @override
@@ -55,11 +54,15 @@ class _LoginScreenState extends State<LoginScreen> {
       print(jsonData);
       systemInstance.token = jsonData['token'];
       sharedPreferences.setString('token', jsonData['token']);
-
       if(jsonData['status'] == 0){
         userId = jsonData['userId'];
         myStorage.writeCounter(userId);
         systemInstance.userId = userId.toString();
+        
+        String fcmToken = await firebaseMessaging.getToken();
+        print("fcmToken=======>>>>>> ${fcmToken}");
+        add_FCMToken(fcmToken); 
+
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (BuildContext context) => MainScreen()), (
             Route<dynamic> route) => false);
@@ -77,6 +80,19 @@ class _LoginScreenState extends State<LoginScreen> {
       });
       CoolAlert.show(context: context, type: CoolAlertType.warning,text: 'ไม่สามารถเชื่อมต่อกับระบบได้');
       print(response.body);
+    }
+  }
+  
+  add_FCMToken(String fcmToken) async{
+    Map params = Map();
+    params['idUserProfile'] = systemInstance.userId;
+    params['fcmToken'] = fcmToken;
+    var data = await http.post("${Config.API_URL}/user/add_FCMToken",body: params);
+    var jsonData = jsonDecode(data.body);
+    if(jsonData['status'] == 0){
+      print('Add the FCMToken success');
+    }else{
+      print('Add the FCMToken fa');
     }
   }
 

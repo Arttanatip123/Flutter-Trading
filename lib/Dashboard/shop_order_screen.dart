@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cool_alert/cool_alert.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/BuyEvent/order_model.dart';
@@ -20,10 +21,11 @@ class _ShopOrderState extends State<ShopOrder> {
   List<Order> order1 = List<Order>();
   List<Order> order2 = List<Order>();
   List<Order> order3 = List<Order>();
-
+  bool _isLoading = false;
 
   @override
   void initState() {
+    _isLoading = true;
     getOrder();
     super.initState();
   }
@@ -78,6 +80,7 @@ class _ShopOrderState extends State<ShopOrder> {
         order3.add(orders);
       }
     }
+    _isLoading = false;
     setState(() {
 
     });
@@ -111,7 +114,7 @@ class _ShopOrderState extends State<ShopOrder> {
           ),
           body: TabBarView(
             children: [
-              order1.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : Container(
+              _isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),)) : Container(
                 child: ListView.builder(
                   itemCount: order1.length,
                   itemBuilder: (context, index){

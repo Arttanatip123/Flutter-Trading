@@ -40,6 +40,7 @@ class _UpdateProductState extends State<UpdateProduct> {
   File tmpFile;
   final picker = ImagePicker();
   var pickedFile;
+  bool _isLoading = false;
 
   _getProduct() async {
     Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
@@ -59,7 +60,9 @@ class _UpdateProductState extends State<UpdateProduct> {
   @override
   void initState() {
     super.initState();
+    _isLoading = true;
     _getProduct();
+    _isLoading = false;
   }
 
   @override
@@ -149,7 +152,7 @@ class _UpdateProductState extends State<UpdateProduct> {
           )
         ],
       ),
-      body:_productName.text.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : SingleChildScrollView(
+      body:_isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),) : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             ListTile(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -24,11 +25,14 @@ class _SearchShopScreenState extends State<SearchShopScreen> {
   Position position;
   double latMe = 16.4396085;
   double lngMe = 102.8285524;
+  bool _isLoading = false;
 
 
   @override
   void initState() {
+    _isLoading = true;
     getShop();
+    _isLoading = false;
     super.initState();
   }
 
@@ -75,7 +79,16 @@ class _SearchShopScreenState extends State<SearchShopScreen> {
       appBar: AppBar(
         title: Text('ร้านค้า'),
       ),
-      body: shopList.isEmpty ? Container(child: Center(child: Text('กำลังค้นหา...'),),) : ListView.builder(
+      body: _isLoading ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),
+            SizedBox(height: 20.0,),
+            Text('กำลังค้นหาสินค้าบริเวณใกล้เคียง'),
+          ],
+        ),
+        ) : ListView.builder(
         itemCount: shopList.length,
         itemBuilder: (context, index){
           var item = shopList[index];

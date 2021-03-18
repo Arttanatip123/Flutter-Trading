@@ -1,16 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:async';
-import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/Dashboard/shop_list_screen.dart';
 import 'package:myapp/Dashboard/shop_order_screen.dart';
-import 'package:myapp/MyShop/home_shop_screen.dart';
-import 'package:myapp/config.dart';
-import 'package:myapp/system/MyStorage.dart';
-import 'package:myapp/system/SystemInstance.dart';
-import 'package:myapp/user/login_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Dashboard/profile_screen.dart';
 
@@ -21,11 +12,26 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+      },
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
+    _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(sound: true, badge: true, alert: true)
+    );
   }
 
   final List<Widget> _children =[

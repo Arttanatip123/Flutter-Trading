@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:myapp/config.dart';
 import 'package:myapp/system/SystemInstance.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool isEdit = false;
+  bool _isLoading = false;
   SystemInstance systemInstance = SystemInstance();
   TextEditingController _userName= TextEditingController();
   TextEditingController _passWord= TextEditingController();
@@ -24,12 +27,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   TextEditingController newPassword = TextEditingController();
   TextEditingController _newPassword = TextEditingController();
   SharedPreferences sharedPreferences;
+  GoogleMapController _controller;
+  Position position;
+  double lat=16.4395769,lng=102.8286626;
 
   @override
   void initState() {
+    _isLoading = true;
     getData();
+    _getCerrentLocation();
+    _isLoading = false;
     super.initState();
   }
+
+  _getCerrentLocation() async {
+    position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() async {
+      lat = position.latitude.toDouble();
+      lng = position.longitude.toDouble();
+      movetoGPS(lat, lng);
+    });
+  }
+  movetoGPS(double la, double ln) async {
+    _controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(la, ln),zoom: 16.0)
+    ));
+
+    //TODO ส่งตำแหน่งปัจจุบันให้ api
+    Map params = {
+      "idUserProfile" : systemInstance.userId,
+      "userLat" : lat.toString(),
+      "userLng" : lng.toString(),
+    };
+    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
+    await http.post('${Config.API_URL}/user/update_location',headers: header, body: params);
+
+  }
+
   Future getData() async {
     sharedPreferences = await SharedPreferences.getInstance();
     Map params = Map();
@@ -49,6 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   updateProfile() async {
+    CoolAlert.show(context: context, type: CoolAlertType.loading);
     Map params = Map();
     params['idUserProfile'] = systemInstance.userId;
     params['userName'] = _userName.text;
@@ -59,6 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
     var data = await http.post('${Config.API_URL}/user/user_update', body: params, headers: header);
     var da = utf8.decode(data.bodyBytes);
+    Navigator.pop(context);
     var jsonData = jsonDecode(da);
       if(jsonData['status'] == 0){
         CoolAlert.show(context: context, type: CoolAlertType.success, text: 'ทำรายการสำเร็จ');
@@ -182,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
         title: Text('ข้อมูลของฉัน'),
       ),
-      body: _userName.text.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : SingleChildScrollView(
+      body: _isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.blue),),) : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             SizedBox(height: 20.0,),
@@ -202,23 +238,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SizedBox(height: 10.0,),
-            // Container(
-            //   height: 45.0,
-            //   child: ListTile(
-            //     leading: Icon(Icons.lock, color: Colors.teal,),
-            //     title: TextField(
-            //       enabled: isEdit,
-            //       controller: _passWord,
-            //       decoration: InputDecoration(
-            //         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.teal)),
-            //           border: OutlineInputBorder(),
-            //           labelText: 'Password',
-            //         labelStyle: TextStyle(color: Colors.teal),
-            //       ),
-            //     ),
-            //   ),
-            // ),
-            // SizedBox(height: 10.0,),
             Container(
               height: 45.0,
               child: ListTile(
@@ -297,7 +316,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 SizedBox(width: 20.0,),
               ],
-            )
+            ),
+            SizedBox(height: 20.0,),
+            Text('ตำแหน่งของฉัน', style: TextStyle(fontSize: 16.0,color: Colors.teal),),
+            Container(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.teal),
+                ),
+                height: MediaQuery.of(context).size.height / 3.5,
+                width: MediaQuery.of(context).size.width - 20,
+                //width: MediaQuery.of(context).size.width,
+                child: GoogleMap(
+                  mapType: MapType.normal,
+                  myLocationEnabled: true,
+                  mapToolbarEnabled: true,
+                  initialCameraPosition: CameraPosition(
+                      target: LatLng(lat, lng),
+                      zoom: 16.0
+                  ),
+                  onMapCreated: (controller){
+                    setState(() {
+                      _controller = controller;
+                    });
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),

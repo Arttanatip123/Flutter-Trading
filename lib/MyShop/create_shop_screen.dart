@@ -36,6 +36,7 @@ class _CreateShopState extends State<CreateShop> {
   File _image;
   final picker = ImagePicker();
   var pickedFile;
+  bool _isLoading = false;
 
 
   Future<Null> selectTime1(BuildContext context) async {
@@ -78,7 +79,7 @@ class _CreateShopState extends State<CreateShop> {
   }
 
 
-  void _getCerrentLocation() async {
+  Future _getCerrentLocation() async {
     position = await getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
     setState(() {
       positions = position;
@@ -108,7 +109,7 @@ class _CreateShopState extends State<CreateShop> {
     });
   }
 
-  movetoGPS(double la, double ln){
+  Future movetoGPS(double la, double ln){
     _controller.animateCamera(CameraUpdate.newCameraPosition(
         CameraPosition(target: LatLng(la, ln),zoom: 16.0)
     ));
@@ -167,7 +168,7 @@ class _CreateShopState extends State<CreateShop> {
         _shopComment.text = jsonData['shopComment'];
         lat = double.parse(jsonData['latitude']);
         lng = double.parse(jsonData['longtitude']);
-        movetoGPS(lat,lng);
+        await movetoGPS(lat,lng);
         setState(() {
           
         });
@@ -178,7 +179,9 @@ class _CreateShopState extends State<CreateShop> {
   @override
   void initState() {
     super.initState();
+    _isLoading = true;
     getData();
+    _isLoading = false;
   }
 
   @override
@@ -199,7 +202,7 @@ class _CreateShopState extends State<CreateShop> {
           )
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading ? Center(child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),) : SingleChildScrollView(
         child: Column(
           children: <Widget>[
             Container(
@@ -292,7 +295,7 @@ class _CreateShopState extends State<CreateShop> {
               leading: Icon(Icons.location_pin, color: Colors.teal,),
               title: OutlineButton(
                 borderSide: BorderSide(color: Colors.teal),
-                child: Text('เรียกตำแหน่งปัจจุบัน'),
+                child: Text('กดปุ่มเพื่อปักหมุดร้าน'),
                 onPressed: (){
                   _getCerrentLocation();
                 },
@@ -304,6 +307,7 @@ class _CreateShopState extends State<CreateShop> {
                 width: 350.0,
                 //width: MediaQuery.of(context).size.width,
                 child: GoogleMap(
+                  myLocationEnabled: true,
                   initialCameraPosition: CameraPosition(
                       target: LatLng(16.439625, 102.828728),
                       zoom: 10.0

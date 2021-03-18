@@ -15,8 +15,10 @@ class ProductList extends StatefulWidget {
 class _ProductListState extends State<ProductList> {
   SystemInstance systemInstance = SystemInstance();
   String userId;
+  bool _isLoading = false;
 
   Future<List<Product>> _getProduct() async {
+    _isLoading = true;
     Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
     var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${userId}', headers: header);
     var da = utf8.decode(data.bodyBytes);
@@ -28,6 +30,7 @@ class _ProductListState extends State<ProductList> {
       products.add(product);
 
     }
+    _isLoading = false;
     return products;
   }
 
@@ -54,11 +57,9 @@ class _ProductListState extends State<ProductList> {
         child: FutureBuilder(
           future: _getProduct(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.data == null) {
-              return Container(
-                child: Center(
-                  child: Text('กำลังดาวน์โหลดข้อมูล...'),
-                ),
+            if (_isLoading == true) {
+              return Center(
+                child: CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation<Color>(Colors.teal),),
               );
             }
             return ListView.builder(

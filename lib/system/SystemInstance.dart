@@ -4,6 +4,7 @@ class SystemInstance {
 
   String _userId;
   String _token;
+  String _fcmToken;
 
 
   factory SystemInstance(){
@@ -22,5 +23,11 @@ class SystemInstance {
 
   set token(String token) {
     _token = token;
+  }
+
+  String get fcmToken => _fcmToken;
+
+  set fcmToken(String fcmToken){
+    _fcmToken = fcmToken;
   }
 }
