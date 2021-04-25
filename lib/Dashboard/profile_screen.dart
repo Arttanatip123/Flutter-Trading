@@ -49,9 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
   movetoGPS(double la, double ln) async {
-    _controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(la, ln),zoom: 16.0)
-    ));
+    Future.delayed(Duration(milliseconds: 2000)).then((value) =>
+        _controller.moveCamera(CameraUpdate.newLatLngZoom(LatLng(la, ln), 16.0))
+    );
 
     //TODO ส่งตำแหน่งปัจจุบันให้ api
     Map params = {

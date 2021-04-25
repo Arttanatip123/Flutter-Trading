@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 import 'package:cool_alert/cool_alert.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:myapp/BuyEvent/product_model.dart';
 import 'package:myapp/BuyEvent/shop_product_list.dart';
 import 'package:myapp/Dashboard/search_shop_screen.dart';
+import 'package:myapp/Dashboard/show_search.dart';
 import 'package:myapp/MyShop/home_shop_screen.dart';
 import 'package:myapp/config.dart';
 import 'package:myapp/system/MyStorage.dart';
@@ -45,6 +48,8 @@ class _ShopListScreenState extends State<ShopListScreen> {
 
   @override
   void initState() {
+    allProducts.clear();
+    shopList.clear();
     checkLoginStatus();
     myStorage = new MyStorage();
     myStorage.readCounter().then((value) {
@@ -200,10 +205,10 @@ class _ShopListScreenState extends State<ShopListScreen> {
         setState: setState,
         onSubmitted: onSubmitted,
         onCleared: () {
-          print("cleared");
+          print("ค้นหา");
         },
         onClosed: () {
-          print("closed");
+          print("ปิด");
         });
   }
 
@@ -232,7 +237,30 @@ class _ShopListScreenState extends State<ShopListScreen> {
       initialIndex: 0,
       length: 2,
       child: Scaffold(
-          appBar: searchBar.build(context),
+          // appBar: searchBar.build(context),
+          appBar: AppBar(
+            title: Text('ซื้อสินค้า'),
+            // actions: [searchBar.getSearchAction(context)],
+            actions: <Widget>[
+              IconButton(icon: Icon(Icons.search),
+                  onPressed: (){
+                    showSearch(context: context, delegate: Search(allProducts));
+                  }),
+            ],
+            bottom: TabBar(
+              controller: tabControl,
+              tabs: [
+                Tab(
+                  child: Text('สินค้าทั้งหมด'),
+                ),
+                Tab(
+                  child: Text('ร้านค้าใกล้เคียง'),
+                ),
+              ],
+              indicatorColor: Colors.white,
+            ),
+            backgroundColor: Colors.teal,
+          ),
           drawer: _drawerTab(),
           key: _scaffoldKey,
           body: TabBarView(
@@ -246,82 +274,33 @@ class _ShopListScreenState extends State<ShopListScreen> {
                           return Card(
                             elevation: 1.0,
                             child: ListTile(
-                              leading: InkWell(
-                                child: Container(
-                                  height: 50.0,
-                                  width: 50.0,
-                                  //TODO เช็คสินค้าหมดหรือไม่
-                                  child: item.productAmount != 0
-                                      ? FadeInImage(
-                                        placeholder: AssetImage("images/Loading.gif"),
-                                        image: NetworkImage(
-                                          "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                                          headers: {"Authorization": "Bearer ${systemInstance.token}"},
-                                        ),
+                              title: Container(
+                                height: 150.0,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: FadeInImage(
+                                    placeholder: AssetImage("images/Loading.gif"),
+                                    image: NetworkImage(
+                                      "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                                      headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                                    ),
                                     fit: BoxFit.cover,
-                                  )
-                                      : Stack(
-                                          children: [
-                                            Container(
-                                              child: FadeInImage(
-                                                placeholder: AssetImage("images/Loading.gif"),
-                                                image: NetworkImage(
-                                                    "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                                                    headers: {"Authorization": "Bearer ${systemInstance.token}"},
-                                                ),
-                                                fit: BoxFit.cover,
-                                              ),
-                                              height: 50.0,
-                                              width: 50.0,
-                                            ),
-                                            Container(
-                                              color:
-                                                  Colors.grey.withOpacity(0.75),
-                                            ),
-                                            Center(
-                                              child: Text(
-                                                'หมด',
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                            )
-                                          ],
-                                        ),
+                                  ),
                                 ),
-                                onTap: () {
-                                  //TODO Show dialog รูปสินค้า
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return Dialog(
-                                          child: Container(
-                                            width: MediaQuery.of(context)
-                                                .size
-                                                .width,
-                                            height: 500,
-                                            child: FadeInImage(
-                                              placeholder: AssetImage("images/Loading.gif"),
-                                              image: NetworkImage(
-                                                  "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                                                  headers: {"Authorization": "Bearer ${systemInstance.token}"},
-                                              ),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        );
-                                      });
-                                },
                               ),
-                              title: Text(
-                                item.productName,
-                                style: TextStyle(fontSize: 20.0),
-                              ),
-                              subtitle:
-                                  Text(item.productPrice.toString() + " THB"),
-                              trailing: Icon(
-                                Icons.arrow_right_outlined,
-                                color: Colors.teal,
-                                size: 30.0,
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${item.productName}', style: TextStyle(fontSize: 25.0, color: Colors.black),),
+                                  Row(
+                                    children: [
+                                      Text('${item.productPrice}  บาท', style: TextStyle(fontSize: 16.0, color: Colors.black),),
+                                      Spacer(),
+                                      Text('ไปยังร้านค้า',style: TextStyle(color: Colors.teal),),
+                                      Icon(Icons.arrow_right, color: Colors.teal,)
+                                    ],
+                                  ),
+                                ],
                               ),
                               onTap: () {
                                 var data = getShopDetail(item.idUserShop);
@@ -581,7 +560,7 @@ class _ShopListScreenState extends State<ShopListScreen> {
             leading: Icon(Icons.shopping_cart),
             title: Text('ซื้อสินค้า'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.of(context);
             },
           ),
           ListTile(
@@ -591,7 +570,8 @@ class _ShopListScreenState extends State<ShopListScreen> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (BuildContext context) => HomeShopScreen()));
+                      builder: (BuildContext context) => HomeShopScreen())).then(
+                      (value) => initState());
               // Navigator.of(context).pushAndRemoveUntil(
               //     MaterialPageRoute(
               //         builder: (BuildContext context) => HomeShopScreen()),
@@ -674,4 +654,7 @@ class AllProducts {
       this.productType,
       this.productSubType,
       this.productImg);
+
+
+
 }

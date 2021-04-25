@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -14,14 +16,18 @@ class ShopProductList extends StatefulWidget {
   final double shopLat;
   final double shopLng;
 
-  const ShopProductList({Key key, this.shopId, this.shopName, this.shopLat, this.shopLng})
+  const ShopProductList(
+      {Key key, this.shopId, this.shopName, this.shopLat, this.shopLng})
       : super(key: key);
+
   @override
-  _ShopProductListState createState() => _ShopProductListState(this.shopId,this.shopName,this.shopLat,this.shopLng);
+  _ShopProductListState createState() => _ShopProductListState(
+      this.shopId, this.shopName, this.shopLat, this.shopLng);
 }
 
 class _ShopProductListState extends State<ShopProductList> {
-  _ShopProductListState(this.shopId,this.shopName,this.shopLat,this.shopLng);
+  _ShopProductListState(this.shopId, this.shopName, this.shopLat, this.shopLng);
+
   SystemInstance systemInstance = SystemInstance();
   Future<void> _launched;
   List<Product> products = List<Product>();
@@ -32,11 +38,13 @@ class _ShopProductListState extends State<ShopProductList> {
   double shopLat;
   double shopLng;
 
-
-
   Future<List<Product>> _getProduct() async {
-    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
-    var data = await http.get('${Config.API_URL}/product/findbyiduser?userId=${shopId}',headers: header);
+    Map<String, String> header = {
+      "Authorization": "Bearer ${systemInstance.token}"
+    };
+    var data = await http.get(
+        '${Config.API_URL}/product/findbyiduser?userId=${shopId}',
+        headers: header);
     var da = utf8.decode(data.bodyBytes);
     var js = jsonDecode(da);
     for (var u in js) {
@@ -53,19 +61,31 @@ class _ShopProductListState extends State<ShopProductList> {
       products.add(product);
     }
     print(products);
+    setState(() {
+
+    });
     return products;
   }
 
   getShopPhone() async {
-    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
-    var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${shopId}',headers: header);
+    Map<String, String> header = {
+      "Authorization": "Bearer ${systemInstance.token}"
+    };
+    var data = await http.post(
+        '${Config.API_URL}/shop/detail?idUserShop=${shopId}',
+        headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     shopPhone = jsonData['shopPhone'];
   }
+
   getUserPhone() async {
-    Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
-    var data = await http.post('${Config.API_URL}/user/user_detail?idUserProfile=${shopId}',headers: header);
+    Map<String, String> header = {
+      "Authorization": "Bearer ${systemInstance.token}"
+    };
+    var data = await http.post(
+        '${Config.API_URL}/user/user_detail?idUserProfile=${shopId}',
+        headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
     shopPhone = jsonData['phoneNumber'];
@@ -93,122 +113,167 @@ class _ShopProductListState extends State<ShopProductList> {
   void initState() {
     this.shopId = widget.shopId;
     //TODO เช็ค parameter ส่งมาเป็นร้าน หรือว่า user
-    if(shopLng == 0.0000000){
+    if (shopLng == 0.0000000) {
       //TODO ถ้าเป็น user ไปดึงเบอร์ user มา
       getUserPhone();
-    }else{
+    } else {
       //TODO ถ้าเป็นร้านไปดึงเบอร์โทรร้านมา
       getShopPhone();
     }
 
-    _getProduct().then((res){
-      setState(() {});
-    });
+    _getProduct();
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.shopName,style: TextStyle(fontSize: 20.0),),
+        title: Text(
+          widget.shopName,
+          style: TextStyle(fontSize: 20.0),
+        ),
         actions: <Widget>[
-
           Row(
             children: [
               InkWell(
-                child: Text('ติดต่อ', style: TextStyle(fontSize: 18.0),),
-                onTap: (){
-                  shopLat != null ? showDialog(
-                      context: context,
-                      builder: (BuildContext context){
-                        return AlertDialog(
-                          content: Container(
-                            height: 130.0,
-                            width: 200.0,
-                            child: Column(
-                              children: [
-                                Text('เลือกช่องทาง'),
-                                SizedBox(height: 15.0,),
-                                Container(
-                                  child: RaisedButton(
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.phone, color: Colors.white,),
-                                        SizedBox(width: 40.0,),
-                                        Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
-                                      ],
+                child: Text(
+                  'ติดต่อ',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+                onTap: () {
+                  shopLat != null
+                      ? showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              content: Container(
+                                height: 130.0,
+                                width: 200.0,
+                                child: Column(
+                                  children: [
+                                    Text('เลือกช่องทาง'),
+                                    SizedBox(
+                                      height: 15.0,
                                     ),
-                                      onPressed: (){
-                                        setState(() {
-                                          print(shopPhone);
-                                          _launched = _makePhoneCall('tel:$shopPhone');
-                                        });
-                                      },
-                                    color: Colors.teal,
-                                  ),
-                                  width: 200.0,
-                                ),
-                                Container(
-                                  child: RaisedButton(
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.location_pin, color: Colors.white,),
-                                        SizedBox(width: 40.0,),
-                                        Text('ตำแหน่งร้าน', style: TextStyle(fontSize: 18.0, color: Colors.white),),
-                                      ],
+                                    Container(
+                                      child: RaisedButton(
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.phone,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(
+                                              width: 40.0,
+                                            ),
+                                            Text(
+                                              'โทรศัพท์',
+                                              style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            print(shopPhone);
+                                            _launched = _makePhoneCall(
+                                                'tel:$shopPhone');
+                                          });
+                                        },
+                                        color: Colors.teal,
+                                      ),
+                                      width: 200.0,
                                     ),
-                                    onPressed: (){
-                                      _openOnGoogleMapApp(shopLat, shopLng);
-                                    },
-                                    color: Colors.teal,
-                                  ),
-                                  width: 200.0,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                  ) : showDialog(
-                      context: context,
-                      builder: (BuildContext context){
-                        return AlertDialog(
-                          content: Container(
-                            height: 130.0,
-                            width: 200.0,
-                            child: Column(
-                              children: [
-                                Text('เลือกช่องทาง'),
-                                Text('*สินค้าไม่ระบุตำแหน่ง กรุณาติดต่อผู้ขายโดยตรง',style: TextStyle(fontSize: 14.0),),
-                                SizedBox(height: 15.0,),
-                                Container(
-                                  child: RaisedButton(
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.phone, color: Colors.white,),
-                                        SizedBox(width: 40.0,),
-                                        Text('โทรศัพท์', style: TextStyle(fontSize: 18.0, color: Colors.white),),
-                                      ],
+                                    Container(
+                                      child: RaisedButton(
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_pin,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(
+                                              width: 40.0,
+                                            ),
+                                            Text(
+                                              'ตำแหน่งร้าน',
+                                              style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                        onPressed: () {
+                                          _openOnGoogleMapApp(shopLat, shopLng);
+                                        },
+                                        color: Colors.teal,
+                                      ),
+                                      width: 200.0,
                                     ),
-                                    onPressed: (){
-                                      setState(() {
-                                        print(shopPhone);
-                                        _launched = _makePhoneCall('tel:$shopPhone');
-                                      });
-                                    },
-                                    color: Colors.teal,
-                                  ),
-                                  width: 200.0,
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                  );
+                              ),
+                            );
+                          })
+                      : showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              content: Container(
+                                height: 130.0,
+                                width: 200.0,
+                                child: Column(
+                                  children: [
+                                    Text('เลือกช่องทาง'),
+                                    Text(
+                                      '*สินค้าไม่ระบุตำแหน่ง กรุณาติดต่อผู้ขายโดยตรง',
+                                      style: TextStyle(fontSize: 14.0),
+                                    ),
+                                    SizedBox(
+                                      height: 15.0,
+                                    ),
+                                    Container(
+                                      child: RaisedButton(
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.phone,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(
+                                              width: 40.0,
+                                            ),
+                                            Text(
+                                              'โทรศัพท์',
+                                              style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            print(shopPhone);
+                                            _launched = _makePhoneCall(
+                                                'tel:$shopPhone');
+                                          });
+                                        },
+                                        color: Colors.teal,
+                                      ),
+                                      width: 200.0,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          });
                 },
               ),
-              SizedBox(width: 15.0,),
+              SizedBox(
+                width: 15.0,
+              ),
               Container(
                 //padding: const EdgeInsets.only(right: 16.0, top: 8.0),
                 child: GestureDetector(
@@ -241,18 +306,29 @@ class _ShopProductListState extends State<ShopProductList> {
                     if (productList.isNotEmpty)
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => Cart(productList,widget.shopId),
+                          builder: (context) =>
+                              Cart(productList, widget.shopId),
                         ),
-                      );
+                      ).then((value) => {
+
+                      });
                   },
                 ),
               ),
-              Container(width: 20.0,)
+              Container(
+                width: 20.0,
+              )
             ],
           )
         ],
       ),
-      body: products.isEmpty ? Container(child: Center(child: Text('กำลังดาวน์โหลดข้อมูล...'),),) : buildListView(),
+      body: products.isEmpty
+          ? Container(
+              child: Center(
+                child: Text('กำลังดาวน์โหลดข้อมูล...'),
+              ),
+            )
+          : buildListView(),
     );
   }
 
@@ -267,88 +343,144 @@ class _ShopProductListState extends State<ShopProductList> {
             vertical: 2.0,
           ),
           child: Card(
-            elevation: 1.0,
+            margin: EdgeInsets.all(1.0),
+            elevation: 5.0,
             child: ListTile(
-              leading: InkWell(
-                onTap: (){
-                  //TODO Show dialog รูปภาพ
-                  showDialog(
-                      context: context,
-                    builder: (BuildContext context){
-                        return Dialog(
-                          child: Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: 500,
+              title: Container(
+                height: 150.0,
+                child: InkWell(
+                  onTap: () {
+                    //TODO Show dialog รูปภาพ
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            child: Container(
+                                width: MediaQuery.of(context).size.width,
+                                height: 500,
+                                child: FadeInImage(
+                                  placeholder: AssetImage("images/Loading.gif"),
+                                  image: NetworkImage(
+                                    "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                                    headers: {
+                                      "Authorization":
+                                          "Bearer ${systemInstance.token}"
+                                    },
+                                  ),
+                                  fit: BoxFit.cover,
+                                )),
+                          );
+                        });
+                  },
+                  child: Container(
+                    height: 50.0,
+                    width: 50.0,
+                    child: item.productAmount != 0
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(5.0),
                             child: FadeInImage(
                               placeholder: AssetImage("images/Loading.gif"),
                               image: NetworkImage(
                                 "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                                headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                                headers: {
+                                  "Authorization":
+                                      "Bearer ${systemInstance.token}"
+                                },
                               ),
                               fit: BoxFit.cover,
-                            )
+                            ),
+                          )
+                        : Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(5.0),
+                                child: FadeInImage(
+                                  placeholder: AssetImage("images/Loading.gif"),
+                                  image: NetworkImage(
+                                    "${Config.API_URL}/product/image?imageName=${item.productImg}",
+                                    headers: {
+                                      "Authorization":
+                                          "Bearer ${systemInstance.token}"
+                                    },
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Container(
+                                color: Colors.grey.withOpacity(0.75),
+                              ),
+                              Center(
+                                child: Text(
+                                  'หมด',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )
+                            ],
                           ),
-                        );
-                    }
-                  );
-                },
-                child: Container(
-                  height: 50.0,
-                  width: 50.0,
-                  child: item.productAmount != 0 ? FadeInImage(
-                    placeholder: AssetImage("images/Loading.gif"),
-                    image: NetworkImage(
-                      "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                      headers: {"Authorization": "Bearer ${systemInstance.token}"},
-                    ),
-                    fit: BoxFit.cover,
-                  ) : Stack(
-                    children: [
-                      Container(
-                        child: FadeInImage(
-                          placeholder: AssetImage("images/Loading.gif"),
-                          image: NetworkImage(
-                            "${Config.API_URL}/product/image?imageName=${item.productImg}",
-                            headers: {"Authorization": "Bearer ${systemInstance.token}"},
-                          ),
-                          fit: BoxFit.cover,
-                        ),
-                        height: 50.0,
-                        width: 50.0,
-                      ),
-                      Container(color: Colors.grey.withOpacity(0.75),),
-                      Center(
-                        child: Text('หมด', style: TextStyle(color: Colors.white),),
-                      )
-                    ],
                   ),
                 ),
               ),
-              title: Text(item.productName,style: TextStyle(fontSize: 20.0),),
-              subtitle: Text(item.productPrice.toString()+" THB"),
-              trailing: GestureDetector(
-                child: (!productList.contains(item))
-                    ? Icon(
-                  Icons.add_circle,
-                  color: Colors.green,
-                  size: 40.0,
-                )
-                    : Icon(
-                  Icons.remove_circle,
-                  color: Colors.red,
-                  size: 40.0,
-                ),
-                onTap: () {
-                  setState(() {
-                    if (!productList.contains(item)){
-                      productList.add(item);
-                      item.numberOfItem = 1;
-                    }
-                    else{
-                      productList.remove(item);
-                    }
-                  });
-                },
+              subtitle: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.productName,
+                        style: TextStyle(fontSize: 22.0, color: Colors.black),
+                      ),
+                      Text(item.productPrice.toString() + " บาท"),
+                    ],
+                  ),
+                  Spacer(),
+                  GestureDetector(
+                    child: (!productList.contains(item))
+                        ? SizedBox(
+                          height: 30.0,
+                          width: 70.0,
+                          child: RaisedButton(
+                              textColor: Colors.white,
+                              color: Colors.teal,
+                              child: Text("เพิ่ม"),
+                              onPressed: () {
+                                setState(() {
+                                  if (!productList.contains(item)) {
+                                    productList.add(item);
+                                    item.numberOfItem = 1;
+                                  } else {
+                                    productList.remove(item);
+                                  }
+                                });
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                        )
+                        : SizedBox(
+                          height: 30.0,
+                          width: 70.0,
+                          child: RaisedButton(
+                              textColor: Colors.white,
+                              color: Colors.red,
+                              child: Text("ลบ"),
+                              onPressed: () {
+                                setState(() {
+                                  if (!productList.contains(item)) {
+                                    productList.add(item);
+                                    item.numberOfItem = 1;
+                                  } else {
+                                    productList.remove(item);
+                                  }
+                                });
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30.0),
+                              ),
+                            ),
+                        ),
+                  ),
+                ],
               ),
             ),
           ),

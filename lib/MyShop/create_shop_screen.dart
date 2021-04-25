@@ -27,7 +27,7 @@ class _CreateShopState extends State<CreateShop> {
   TimeOfDay _time2 = TimeOfDay.now();
   TimeOfDay _timePicked1, _timePicked2;
   SystemInstance systemInstance = SystemInstance();
-  String shopName='', latitude='', longtitude='', officeHours='', shopComment='', shopStatus = '', shopImg='', time1 ='', time2 = '';
+  String shopName='',  officeHours='', shopComment='', shopStatus = '', shopImg='', time1 ='', time2 = '';
   var positions;
   double lat,lng;
   Set<Marker> markers = Set.from([]);
@@ -86,8 +86,8 @@ class _CreateShopState extends State<CreateShop> {
       lat = position.latitude.toDouble();
       lng = position.longitude.toDouble();
       print(position);
-      movetoGPS(lat,lng);
     });
+    movetoGPS(lat,lng);
   }
 
   Future getImage() async{
@@ -109,16 +109,6 @@ class _CreateShopState extends State<CreateShop> {
     });
   }
 
-  Future movetoGPS(double la, double ln){
-    _controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(la, ln),zoom: 16.0)
-    ));
-    Marker mrker = Marker(markerId: MarkerId('1'),position: LatLng(la,ln));
-    setState(() {
-      markers.add(mrker);
-    });
-  }
-
   Future createShop() async{
     Dio dio = Dio();
     Map<String, dynamic> params = Map();
@@ -134,7 +124,9 @@ class _CreateShopState extends State<CreateShop> {
     }else{
       params['shopImg'] = shopImg;
     }
-
+    if(shopStatus == ''){
+      params['shopStatus'] = '0';
+    }
     params['shopStatus'] = shopStatus;
     FormData formData = FormData.fromMap(params);
     dio.options.headers["Authorization"] = "Bearer ${systemInstance.token}";
@@ -152,7 +144,7 @@ class _CreateShopState extends State<CreateShop> {
     });
   }
 
-  Future getData() async{
+  getData() async{
     Map<String, String> header = {"Authorization": "Bearer ${systemInstance.token}"};
     var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(systemInstance.userId)}',headers: header);
     var da = utf8.decode(data.bodyBytes);
@@ -166,22 +158,30 @@ class _CreateShopState extends State<CreateShop> {
         shopImg = jsonData['shopImg'];
         shopStatus = jsonData['shopStatus'];
         _shopComment.text = jsonData['shopComment'];
-        lat = double.parse(jsonData['latitude']);
-        lng = double.parse(jsonData['longtitude']);
-        await movetoGPS(lat,lng);
-        setState(() {
-          
-        });
+        double lat = double.parse(jsonData['latitude']).toDouble();
+        double lng = double.parse(jsonData['longtitude']).toDouble();
+        movetoGPS(lat,lng);
 
     }
   }
 
+  movetoGPS(double la, double ln) async {
+    Future.delayed(Duration(milliseconds: 2000)).then((value) =>
+        _controller.moveCamera(CameraUpdate.newLatLngZoom(LatLng(la, ln), 16.0))
+    );
+    Marker marker = Marker(markerId: MarkerId('1'),position: LatLng(la,ln));
+    setState(() {
+        markers.add(marker);
+    });
+  }
+
+
   @override
   void initState() {
-    super.initState();
     _isLoading = true;
     getData();
     _isLoading = false;
+    super.initState();
   }
 
   @override
@@ -209,13 +209,15 @@ class _CreateShopState extends State<CreateShop> {
               height: MediaQuery.of(context).size.height / 3.5,
               width: MediaQuery.of(context).size.width - 20,
               child: _image == null ? Container(
-                  child: Center(
-                      child: Image.network(
-                        "${Config.API_URL}/shop/image?imageName=${shopImg}",
-                        headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                  child: FadeInImage(
+                        placeholder: AssetImage("images/Loading.gif"),
+                        image: NetworkImage(
+                          "${Config.API_URL}/shop/image?imageName=${shopImg}",
+                          headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                        ),
                         fit: BoxFit.cover,
                       ),
-                  ),
+
                   color: Colors.grey[200],
                 )  : Image.file(_image,fit: BoxFit.cover,),
 
@@ -295,14 +297,13 @@ class _CreateShopState extends State<CreateShop> {
               leading: Icon(Icons.location_pin, color: Colors.teal,),
               title: OutlineButton(
                 borderSide: BorderSide(color: Colors.teal),
-                child: Text('กดปุ่มเพื่อปักหมุดร้าน'),
+                child: Text('แก้ไขตำแหน่งร้านค้า'),
                 onPressed: (){
                   _getCerrentLocation();
                 },
               ),
             ),
-            Container(
-              child: Container(
+            lat.toString().isEmpty? Container(height: 200.0,width: 350.0,) : Container(
                 height: 200.0,
                 width: 350.0,
                 //width: MediaQuery.of(context).size.width,
@@ -320,7 +321,6 @@ class _CreateShopState extends State<CreateShop> {
                   },
                ),
               ),
-            ),
             ListTile(
               leading: Icon(Icons.comment),
               title: TextField(

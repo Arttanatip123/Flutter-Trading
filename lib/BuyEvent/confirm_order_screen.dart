@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/BuyEvent/cart_screen.dart';
 import 'package:myapp/BuyEvent/product_model.dart';
 import 'package:myapp/BuyEvent/shop_product_list.dart';
 import 'package:myapp/config.dart';
@@ -27,6 +28,29 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
   int totalPrice;
   String dateTime;
   int shopId;
+  String shopName;
+  double shopLat, shopLng;
+
+  @override
+  void initState() {
+    getDataShop(shopId);
+    super.initState();
+  }
+
+  getDataShop(int shopId) async {
+    Map<String, String> header = {
+      "Authorization": "Bearer ${systemInstance.token}"
+    };
+    var data = await http.post(
+        '${Config.API_URL}/shop/detail?idUserShop=${shopId}',
+        headers: header);
+    var da = utf8.decode(data.bodyBytes);
+    var jsonData = jsonDecode(da);
+    shopName = jsonData['shopName'];
+    shopLat = double.parse(jsonData['latitude']);
+    shopLng = double.parse(jsonData['longtitude']);
+  }
+
 
   postOrder(){
     Map<String, String> params = Map();
@@ -42,6 +66,9 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
       if(status == 0){
         Navigator.pop(context);
         Navigator.pop(context);
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder:
+            (BuildContext context)=> ShopProductList(shopId: widget.shopId,shopName: shopName,shopLat: shopLat,shopLng: shopLng,)));
         CoolAlert.show(context: context, type: CoolAlertType.success,text: "ทำรายการสำเร็จ");
       }else{
         CoolAlert.show(context: context, type: CoolAlertType.error);
@@ -56,7 +83,6 @@ class _ConfirmOrderState extends State<ConfirmOrder> {
       String jsonOrder = jsonEncode(order);
       orders.add(jsonOrder);
     }
-
     return Scaffold(
       appBar: AppBar(
         title: Text('ยืนยันออเดอร์หรือไม่ ?',style: TextStyle(fontSize: 25.0),),

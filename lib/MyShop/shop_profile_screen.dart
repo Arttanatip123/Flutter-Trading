@@ -30,7 +30,7 @@ class _ShopProfileScreenState extends State<ShopProfileScreen> {
     var data = await http.post('${Config.API_URL}/shop/detail?idUserShop=${int.parse(userId)}', headers: header);
     var da = utf8.decode(data.bodyBytes);
     var jsonData = jsonDecode(da);
-    //print(jsonData);
+    print(jsonData);
     shopStatus = jsonData['shopStatus'];
     setState(() {
       shopStatus == "0" ? isSwitched = false : isSwitched = true;

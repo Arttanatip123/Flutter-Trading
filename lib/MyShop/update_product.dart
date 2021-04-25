@@ -245,21 +245,21 @@ class _UpdateProductState extends State<UpdateProduct> {
               padding: const EdgeInsets.only(top: 30),
               child: Center(
                 child: _image == null
-                    ? Container(
-                        child: Container(
-                          child: FadeInImage(
-                            placeholder: AssetImage("images/Loading.gif"),
-                            image: NetworkImage(
-                              "${Config.API_URL}/product/image?imageName=${widget.productImg}",
-                              headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                    ? ListTile(
+                      title: Container(
+                        height: 150.0,
+                        child: Card(
+                              child: FadeInImage(
+                                placeholder: AssetImage("images/Loading.gif"),
+                                image: NetworkImage(
+                                  "${Config.API_URL}/product/image?imageName=${widget.productImg}",
+                                  headers: {"Authorization": "Bearer ${systemInstance.token}"},
+                                ),
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        color: Colors.grey[200],
-                        width: 250.0,
-                        height: 250.0,
-                      )
+                      ),
+                    )
                     : Image.file(_image),
               ),
             ),

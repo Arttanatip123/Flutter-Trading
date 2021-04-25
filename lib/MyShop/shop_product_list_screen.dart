@@ -45,7 +45,6 @@ class _ProductListState extends State<ProductList> {
   Widget build(BuildContext context) {
     SystemInstance instance = SystemInstance();
     userId = instance.userId;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -71,9 +70,8 @@ class _ProductListState extends State<ProductList> {
                       borderRadius: BorderRadius.circular(5.0),
                     ),
                     child: ListTile(
-                      leading: Container(
-                        height: 50.0,
-                        width: 50.0,
+                      title: Container(
+                        height: 150.0,
                         child: FadeInImage(
                           placeholder: AssetImage("images/Loading.gif"),
                           image: NetworkImage(
@@ -83,26 +81,28 @@ class _ProductListState extends State<ProductList> {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      title: Text(
-                        snapshot.data[index].productName,
-                        style: TextStyle(
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Row(
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('จำนวน ' +
-                              snapshot.data[index].productAmount.toString()),
-                          Spacer(),
-                          Text(
-                            snapshot.data[index].productPrice.toString() + " บาท",
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          )
+                          Text(snapshot.data[index].productName, style: TextStyle(fontSize: 20.0, color: Colors.black),),
+                          Row(
+                            children: [
+                              Text('จำนวน ' +
+                                  snapshot.data[index].productAmount.toString(),
+                                style: TextStyle(fontSize: 18.0, color: Colors.black),
+                              ),
+                              Spacer(),
+                              Text(
+                                snapshot.data[index].productPrice.toString() + " บาท",
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              )
+                            ],
+                          ),
+
                         ],
                       ),
                       onTap: () {

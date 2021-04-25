@@ -87,7 +87,7 @@ class _CartState extends State<Cart> {
                                 icon: Icon(
                                   Icons.remove_circle_outline,
                                   size: 30.0,
-                                  color: Colors.red[500],
+                                  color: Colors.red[800],
                                 ),
                                 onPressed: () {
                                   if (_cart[index].numberOfItem > 1){
@@ -105,7 +105,7 @@ class _CartState extends State<Cart> {
                                 icon: Icon(
                                   Icons.add_circle_outline,
                                   size: 30.0,
-                                  color: Colors.blue[500],
+                                  color: Colors.teal[500],
                                 ),
                                 onPressed: () {
                                   setState(() {
@@ -178,7 +178,7 @@ class _CartState extends State<Cart> {
                         color: Colors.white,
                       ),
                     ),
-                    color: Colors.blue,
+                    color: Colors.teal,
                   ),
                 ),
               ],
